@@ -600,6 +600,42 @@ M.perform_action = function(action, cb)
       ---@diagnostic disable-next-line: param-type-mismatch
       uv.fs_symlink(target, path, flags, cb)
     else
+      local ext = vim.fn.fnamemodify(path, ":e")
+      if ext == "ipynb" then
+        -- Path to your jupytext.nvim template
+        local template_path =
+          vim.fn.expand("~/.local/share/nvim/lazy/jupytext.nvim/data/template.ipynb")
+
+        -- Safety check: template must exist
+        if vim.fn.filereadable(template_path) ~= 1 then
+          cb("jupytext.nvim template not found at " .. template_path)
+          return
+        end
+
+        -- Copy the template to the new path (creates valid .ipynb JSON)
+        local copy_ok, copy_err = vim.fn.writefile(vim.fn.readfile(template_path), path)
+        if not copy_ok then
+          cb("Failed to copy template: " .. tostring(copy_err))
+          return
+        end
+
+        -- Optional but highly recommended: immediately convert to paired text format
+        -- Adjust "--to" to your actual config (py:percent, py:light, md, hydrogen, etc.)
+        vim.system(
+          { "jupytext", "--to", ".py", "--output", path, path },
+          { text = true },
+          vim.schedule_wrap(function(result)
+            if result.code == 0 then
+              -- Success: paired file created, .ipynb is valid
+              cb()
+            else
+              cb("jupytext conversion failed after template copy: " .. (result.stderr or "error"))
+            end
+          end)
+        )
+      else
+        fs.touch(path, cb)
+      end
       fs.touch(path, cb)
     end
   elseif action.type == "delete" then
