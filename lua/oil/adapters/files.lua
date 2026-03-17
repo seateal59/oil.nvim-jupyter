@@ -604,7 +604,7 @@ M.perform_action = function(action, cb)
       if ext == "ipynb" then
         -- Path to your jupytext.nvim template
         local template_path =
-          vim.fn.expand("~/.local/share/nvim/lazy/jupytext.nvim/data/template.ipynb")
+          vim.fn.expand("~/.local/share/nvim/lazy/jupytext--zz.nvim/data/template.ipynb")
 
         -- Safety check: template must exist
         if vim.fn.filereadable(template_path) ~= 1 then
